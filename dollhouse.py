@@ -1,8 +1,16 @@
 import cadquery as cq
 from cqterrain import Building
 
-cq_editor_show = False
-export_to_file = True
+cq_editor_show = True
+export_to_file = False
+render_floor = False
+
+if render_floor:
+    pattern = cq.importers.importStep('stl/floral.step')
+    scaled = pattern.val().scale(0.15)
+    center = scaled.CenterOfBoundBox()
+    pattern = cq.Workplane().add(scaled).translate((center.x*-1,center.y*-1,center.z*-1))
+
 
 def make_arch_door(wall, length, width, height, floor_height):
     bottom = wall.faces("-Z").val()
@@ -11,8 +19,6 @@ def make_arch_door(wall, length, width, height, floor_height):
               .translate((0,0,(height/2)+floor_height))
               )
     cutout = cutout.faces("Z").edges("Y").fillet((length/2)-.5)
-
-    log(bottom.Center())
     w = wall.cut(cutout)
     return w
 
@@ -23,6 +29,9 @@ def make_kitchen():
     bp.room['window_walls'] = [False, True, True, False]
     bp.room['door_walls'] = [False, False, False, True]
     bp.room['make_custom_door'] = make_arch_door
+    if render_floor:
+        bp.room['floor_tile'] = pattern
+        bp.room['floor_tile_padding'] = .5
 
     bp.door['length'] = 60
     bp.door['height'] = 100
@@ -82,6 +91,7 @@ scene = (cq.Workplane("XY")
          .add(center)
          .add(right)
          )
+
 
 if cq_editor_show:
     show_object(scene)

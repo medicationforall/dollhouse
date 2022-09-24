@@ -1,13 +1,15 @@
 import cadquery as cq
 from cqterrain import Building
 
+cq_editor_show = False
+export_to_file = True
+
 def make_arch_door(wall, length, width, height):
     window_cutout = cq.Workplane().box(length, width, height)
     w = wall.cut(window_cutout)
     return w
 
 def make_kitchen():
-    log('make_left')
     bp = Building(length=175, width=175, height=350, stories=2)
 
     bp.room['build_walls']= [False,True,True,True]
@@ -28,7 +30,6 @@ def make_kitchen():
     return left
 
 def make_center():
-    log('make_center')
     bp = Building(length=125, width=175, height=350, stories=2)
     bp.room['build_walls']= [False,True,False,False]
     bp.room['window_walls'] = [False, False, False, False]
@@ -39,7 +40,6 @@ def make_center():
     return center
 
 def make_living():
-    log('make_right')
     bp = Building(length=175, width=175, height=350, stories=2)
 
     bp.room['build_walls']= [False,True,True,True]
@@ -64,4 +64,9 @@ scene = (cq.Workplane("XY")
          .add(center)
          .add(right)
          )
-show_object(scene)
+
+if cq_editor_show:
+    show_object(scene)
+
+if export_to_file:
+    cq.exporters.export(scene,'out/dollhouse.stl')

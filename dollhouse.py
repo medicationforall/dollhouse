@@ -5,7 +5,7 @@ from cadqueryhelper import series, grid
 cq_editor_show = True
 export_to_file = False
 render_floor = False
-render_roof_tiles = False
+render_roof_tiles = True
 
 def add_tudor_frame(wall, length, height, wall_width, frame_width=5, frame_height=3, rows=2, columns = 5,  w_length=0, w_height=0, rotate=0):
     #show_object(wall)
@@ -33,17 +33,21 @@ def add_tudor_frame(wall, length, height, wall_width, frame_width=5, frame_heigh
 
 
 
-def make_roof(roof_width=185):
+def make_roof(roof_width=185, x_offset=0):
     gable_roof_raw = roof.dollhouse_gable(length=roof_width, width=185, height=100)
     gable_roof = roof.shell(gable_roof_raw,face="Y", width=-4)
     angle = roof.angle(185, 100)
     face_x = gable_roof_raw.faces("<X")
 
     if render_roof_tiles:
-        tile = cq.Workplane("XY").box(8,8,2).rotate((0,1,0),(0,0,0),8)
-        tiles = roof.tiles(tile, face_x, 185, 100, 8, 8, angle, rows=28, odd_col_push=[1,0], intersect=False).rotate((0,0,1),(0,0,0),90).translate((3,45,0))
+        tile = cq.Workplane("XY").box(15,12,2).rotate((0,1,0),(0,0,0),8)
+        tiles = roof.tiles(tile, face_x, 185, 100, 15, 12, angle, rows=28, odd_col_push=[3,0], intersect=False).rotate((0,0,1),(0,0,0),90).translate((3,45,0))
+        tiles = tiles.translate((x_offset,0,0))
         inter_tiles = cq.Workplane("XY").box(roof_width,185, 100)
         inter_tiles = tiles.intersect(inter_tiles)
+
+        #show_object(inter_tiles)
+        #show_object(gable_roof)
 
         return gable_roof.add(inter_tiles)
     else:
@@ -146,7 +150,7 @@ def make_kitchen():
     bp.floors[1].walls[2] = paneled_wall2#.rotate((0,0,1),(0,0,0),-90)
 
     left = bp.build()
-    left_roof = make_roof().translate((5,-5,312.5))
+    left_roof = make_roof(x_offset=5).translate((5,-5,312.5))
     combine = cq.Workplane("XY").add(left).add(left_roof)
     return combine
 

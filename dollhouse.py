@@ -1,11 +1,37 @@
 import cadquery as cq
 from cqterrain import Building, window, roof
-from cadqueryhelper import series
+from cadqueryhelper import series, grid
 
-cq_editor_show = False
-export_to_file = True
+cq_editor_show = True
+export_to_file = False
 render_floor = False
-render_roof_tiles = True
+render_roof_tiles = False
+
+def add_tudor_frame(wall, length, height, wall_width, frame_width=5, frame_height=3, rows=2, columns = 5,  w_length=0, w_height=0, rotate=0):
+    #show_object(wall)
+    t_length = length/ columns - frame_width
+    t_width = frame_height
+    t_height =  (height / rows) - frame_width
+
+    frame = window.frame(length, frame_width, height).translate((0,-1*((frame_height/2)+(wall_width/2)),0))
+    grill = window.grill(length, wall_width, height, columns, rows, frame_width, frame_height ).translate((0,-1*((frame_height/2)+(wall_width/2)),0))
+    if w_length and w_height:
+        win_cut = cq.Workplane("XY").box(w_length, frame_height, w_height).translate((0,-1*((frame_height/2)+(wall_width/2)),0))
+
+        grill_cut = grill.cut(win_cut)
+        #show_object(grill_cut)
+
+        if rotate:
+            grill_cut = grill_cut.rotate((0,0,1),(0,0,0),rotate)
+            frame = frame.rotate((0,0,1),(0,0,0),rotate)
+        return wall.add(frame).add(grill_cut)
+    #show_object(grill2)
+    if rotate:
+        grill = grill.rotate((0,0,1),(0,0,0),rotate)
+        frame = frame.rotate((0,0,1),(0,0,0),rotate)
+    return wall.add(frame).add(grill)
+
+
 
 def make_roof(roof_width=185):
     gable_roof_raw = roof.dollhouse_gable(length=roof_width, width=185, height=100)
@@ -25,6 +51,7 @@ def make_roof(roof_width=185):
 
 
 def lattice_windows(wall, length, width, height, count, padding):
+    log(f'custom window lattice {length}, {height}')
     window_cutout = cq.Workplane().box(length, width, height)
     window_cut_series = series(window_cutout, count, length_offset = padding)
 
@@ -110,6 +137,14 @@ def make_kitchen():
     bp.floors[1].make_custom_windows = lattice_windows
     bp.floors[1].make()
 
+    front_wall = bp.floors[1].walls[1]
+    paneled_wall = add_tudor_frame(front_wall, 175, bp.floors[1].height, bp.floors[1].wall_width, frame_width=5, frame_height=1.5, columns=4, w_length=78, w_height=55)
+    bp.floors[1].walls[1] = paneled_wall
+
+    side_wall = bp.floors[1].walls[2]
+    paneled_wall2 = add_tudor_frame(side_wall, 175, bp.floors[1].height, bp.floors[1].wall_width, frame_width=5, frame_height=1.5, columns=4, w_length=78, w_height=55, rotate=-90)
+    bp.floors[1].walls[2] = paneled_wall2#.rotate((0,0,1),(0,0,0),-90)
+
     left = bp.build()
     left_roof = make_roof().translate((5,-5,312.5))
     combine = cq.Workplane("XY").add(left).add(left_roof)
@@ -128,6 +163,11 @@ def make_center():
     bp.make()
     bp.floors[0].door_walls = [False, True, True, True]
     bp.floors[0].make()
+
+    front_wall = bp.floors[1].walls[1]
+    paneled_wall = add_tudor_frame(front_wall, 125, bp.floors[1].height, bp.floors[1].wall_width, frame_width=5, frame_height=1.5, columns=4)
+    bp.floors[1].walls[1] = paneled_wall
+
     center = bp.build()
 
     center_roof = make_roof(125).translate((0,-5,312.5))
@@ -157,6 +197,15 @@ def make_living():
 
     bp.floors[1].make_custom_windows = lattice_windows
     bp.floors[1].make()
+
+    front_wall = bp.floors[1].walls[1]
+    paneled_wall = add_tudor_frame(front_wall, 175, bp.floors[1].height, bp.floors[1].wall_width, frame_width=5, frame_height=1.5, columns=4, w_length=78, w_height=55)
+    bp.floors[1].walls[1] = paneled_wall
+
+    side_wall = bp.floors[1].walls[3]
+    paneled_wall2 = add_tudor_frame(side_wall, 175, bp.floors[1].height, bp.floors[1].wall_width, frame_width=5, frame_height=1.5, columns=4, w_length=78, w_height=55, rotate=90)
+    bp.floors[1].walls[3] = paneled_wall2#.rotate((0,0,1),(0,0,0),-90)
+
 
     right = bp.build()
     right_roof = make_roof().translate((-5,-5,312.5))

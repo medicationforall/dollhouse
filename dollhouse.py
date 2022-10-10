@@ -2,8 +2,8 @@ import cadquery as cq
 from cqterrain import Building, window, roof, stone
 from cadqueryhelper import series, grid
 
-cq_editor_show = False
-export_to_file = True
+cq_editor_show = True
+export_to_file = False
 render_floor = False
 render_roof_tiles = True
 
@@ -66,6 +66,55 @@ def make_roof(roof_width=185, x_offset=0):
         return gable_roof.add(inter_tiles)
     else:
         return gable_roof
+
+
+def make_over_roof(roof_part, width=185):
+    gable_roof_raw = roof.dollhouse_gable(length=width, width=185, height=100).translate((0,0,-4.5))
+
+    length=185
+    height = 100
+    inner_height = 60
+    roof_half_one = roof.dollhouse_gable(length=140, width=40, height=30).translate((0,0,29)).rotate((0,0,1),(0,0,0),90).translate((-20,15,0))
+    roof_half_two = roof.dollhouse_gable(length=140, width=40, height=30).translate((0,0,29)).rotate((0,0,1),(0,0,0),-90).translate((20,15,0))
+
+    if render_roof_tiles:
+        angle = roof.angle(40, 30)
+        face_x = roof_half_one.faces(">X")
+        tile = cq.Workplane("XY").box(15,12,2).rotate((0,1,0),(0,0,0),8)
+        tiles = roof.tiles(tile, face_x, 140, 30, 15, 12, angle, rows=4, odd_col_push=[3,0], intersect=False).translate((-14.5,23,29))
+        tiles2 = roof.tiles(tile, face_x, 140, 30, 15, 12, angle, rows=4, odd_col_push=[3,0], intersect=False).translate((-14.5,23,29)).rotate((0,0,1),(0,0,0),180).translate((0,46,0))
+
+
+    inner = roof_part.faces("<Z").box(80,110,inner_height, combine=False).translate((0,0,inner_height/2+4))
+    inner = inner.union(roof_half_one).union(roof_half_two)
+
+    inner_shell = roof_part.faces("<Z").box(80,110,inner_height, combine=False).translate((0,0,inner_height/2+4))
+    inner_shell = inner_shell.union(roof_half_one).union(roof_half_two)
+
+    inner_shell = inner_shell.faces(">Y").shell(-4)
+
+    if render_roof_tiles:
+        tile_cut = cq.Workplane("XY").box(40,140,50).translate((20,15,25))
+        tile_cut2 = cq.Workplane("XY").box(40,140,50).translate((-20,15,25))
+
+        tiles = tiles.intersect(tile_cut)
+        tiles2 = tiles2.intersect(tile_cut2)
+
+        inner_shell = inner_shell.add(tiles).add(tiles2)
+    inner_shell = inner_shell.cut(gable_roof_raw)
+
+    combine = roof_part.cut(inner).add(inner_shell)
+
+    window_slug = inner.faces("<Y").cylinder(8,20,combine=False).rotateAboutCenter((1,0,0),90).translate((0,2.5,10))
+    window_inner = inner.faces("<Y").cylinder(8,17,combine=False).rotateAboutCenter((1,0,0),90).translate((0,2.5,10))
+    win_frame = window_slug.cut(window_inner)
+    grill = window.grill(40, 5, 40, 2, 2, 3, 3 ).translate((0,-52,5))
+    combine = combine.cut(window_slug).add(win_frame).add(grill)
+
+    #show_object(window_slug)
+    #show_object(combine)
+    return combine
+
 
 
 def lattice_windows(wall, length, width, height, count, padding):
@@ -174,7 +223,7 @@ def make_kitchen():
     left = bp.build()
     left_roof = make_roof(x_offset=5).translate((5,-5,312.5))
     combine = cq.Workplane("XY").add(left).add(left_roof)
-    return left_roof
+    #return left_roof
     return combine
 
 def make_center():
@@ -197,11 +246,15 @@ def make_center():
 
     center = bp.build()
 
-    center_roof = make_roof(125).translate((0,-5,312.5))
-    combine = cq.Workplane("XY").add(center).add(center_roof)
+    center_roof = make_roof(125)#.translate((0,-5,312.5))
+    over_roof = make_over_roof(center_roof, 125)
+    over_roof = over_roof.translate((0,-5,312.5))
+
+    #center_roof = center_roof.translate((0,-5,312.5))
+    combine = cq.Workplane("XY").add(center).add(over_roof)
+    #return center_roof
     return combine
 
-    return center
 
 def make_living():
     bp = Building(length=175, width=175, height=350, stories=2)
@@ -245,17 +298,17 @@ def make_living():
     right = bp.build()
     right_roof = make_roof().translate((-5,-5,312.5))
     combine = cq.Workplane("XY").add(right).add(right_roof)
-    return right_roof
+    #return right_roof
     return combine
 
 
-#left = make_kitchen().translate((87.5 + 62.5,0,0))
-#center = make_center()
+left = make_kitchen().translate((87.5 + 62.5,0,0))
+center = make_center()
 right = make_living().translate((-87.5 - 62.5,0,0))
 
 scene = (cq.Workplane("XY")
-         #.add(left)
-         #.add(center)
+         .add(left)
+         .add(center)
          .add(right)
          )
 

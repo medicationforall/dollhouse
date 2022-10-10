@@ -2,8 +2,8 @@ import cadquery as cq
 from cqterrain import Building, window, roof, stone
 from cadqueryhelper import series, grid
 
-cq_editor_show = True
-export_to_file = False
+cq_editor_show = False
+export_to_file = True
 render_floor = False
 render_roof_tiles = True
 
@@ -62,7 +62,7 @@ def make_roof(roof_width=185, x_offset=0):
 
         #show_object(inter_tiles)
         #show_object(gable_roof)
-
+        #return gable_roof
         return gable_roof.add(inter_tiles)
     else:
         return gable_roof
@@ -87,8 +87,10 @@ def make_over_roof(roof_part, width=185):
 
     inner = roof_part.faces("<Z").box(80,110,inner_height, combine=False).translate((0,0,inner_height/2+4))
     inner = inner.union(roof_half_one).union(roof_half_two)
+    #show_object(inner)
+    #show_object(roof_part)
 
-    inner_shell = roof_part.faces("<Z").box(80,110,inner_height, combine=False).translate((0,0,inner_height/2+4))
+    inner_shell = roof_part.faces("<Z").box(80,140,inner_height, combine=False).translate((0,15,inner_height/2+4))
     inner_shell = inner_shell.union(roof_half_one).union(roof_half_two)
 
     inner_shell = inner_shell.faces(">Y").shell(-4)
@@ -177,6 +179,7 @@ def make_arch_door(wall, length, width, height, floor_height):
     w = wall.cut(cutout)
     return w
 
+
 def make_kitchen():
     bp = Building(length=175, width=175, height=350, stories=2)
 
@@ -221,9 +224,12 @@ def make_kitchen():
     bp.floors[1].walls[2] = paneled_wall2#.rotate((0,0,1),(0,0,0),-90)
 
     left = bp.build()
-    left_roof = make_roof(x_offset=5).translate((5,-5,312.5))
-    combine = cq.Workplane("XY").add(left).add(left_roof)
-    #return left_roof
+    left_roof = make_roof()#x_offset=5)#.translate((5,-5,312.5))
+    over_roof = make_over_roof(left_roof, 125)
+    over_roof2 = over_roof.translate((5,-5,312.5))
+
+    combine = cq.Workplane("XY").add(left).add(over_roof2)
+    #return over_roof
     return combine
 
 def make_center():
@@ -296,9 +302,12 @@ def make_living():
 
 
     right = bp.build()
-    right_roof = make_roof().translate((-5,-5,312.5))
-    combine = cq.Workplane("XY").add(right).add(right_roof)
-    #return right_roof
+    right_roof = make_roof()#.translate((-5,-5,312.5))
+    over_roof = make_over_roof(right_roof, 125)
+    over_roof2 = over_roof.translate((-5,-5,312.5))
+
+    combine = cq.Workplane("XY").add(right).add(over_roof2)
+    #return over_roof
     return combine
 
 
@@ -317,4 +326,4 @@ if cq_editor_show:
     show_object(scene)
 
 if export_to_file:
-    cq.exporters.export(scene,'out/right_roof.stl')
+    cq.exporters.export(scene,'out/dollhouse.stl')

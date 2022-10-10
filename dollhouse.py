@@ -1,9 +1,9 @@
 import cadquery as cq
-from cqterrain import Building, window, roof
+from cqterrain import Building, window, roof, stone
 from cadqueryhelper import series, grid
 
-cq_editor_show = True
-export_to_file = False
+cq_editor_show = False
+export_to_file = True
 render_floor = False
 render_roof_tiles = True
 
@@ -31,6 +31,20 @@ def add_tudor_frame(wall, length, height, wall_width, frame_width=5, frame_heigh
         frame = frame.rotate((0,0,1),(0,0,0),rotate)
     return wall.add(frame).add(grill)
 
+def add_stones(wall, length, height, wall_width, rotate=0, seed="test4"):
+    tile = cq.Workplane("XY").box(10,10,2)
+    tile2 = cq.Workplane("XY").box(8,8,2)
+    tile3 = cq.Workplane("XY").box(6,12,2)
+    stone_list = [tile.chamfer(0.8), tile2.fillet(.5), tile3.chamfer(0.5)]
+    stones = stone.make_stones(stone_list, [12,12,2], columns = 14, rows = 3, seed=seed).rotate((0,1,0),(0,0,0), 90).rotate((0,0,1),(0,0,0), 90)
+    stones = stones.translate((0,-2,-1*(height/2)+(24))).rotate((0,0,1),(0,0,0), rotate)
+    frame = window.frame(length, 2, 48).translate((0,-1*((1)+(wall_width/2)),-1*(height/2)+(24))).rotate((0,0,1),(0,0,0), rotate)
+
+    #show_object(stones)
+    #show_object(wall)
+    #show_object(frame)
+    return wall.add(stones).add(frame)
+
 
 
 def make_roof(roof_width=185, x_offset=0):
@@ -55,7 +69,7 @@ def make_roof(roof_width=185, x_offset=0):
 
 
 def lattice_windows(wall, length, width, height, count, padding):
-    log(f'custom window lattice {length}, {height}')
+    #log(f'custom window lattice {length}, {height}')
     window_cutout = cq.Workplane().box(length, width, height)
     window_cut_series = series(window_cutout, count, length_offset = padding)
 
@@ -138,6 +152,14 @@ def make_kitchen():
     bp.floors[0].make_custom_windows = casement_windows
     bp.floors[0].make()
 
+    st_front_wall = bp.floors[0].walls[1]
+    stone_wall = add_stones(st_front_wall, 175, bp.floors[1].height, bp.floors[1].wall_width)
+    bp.floors[0].walls[1] = stone_wall
+
+    st_side_wall = bp.floors[0].walls[2]
+    stone_side_wall = add_stones(st_side_wall, 175, bp.floors[0].height, bp.floors[0].wall_width, rotate = -90, seed="test5")
+    bp.floors[0].walls[2] = stone_side_wall
+
     bp.floors[1].make_custom_windows = lattice_windows
     bp.floors[1].make()
 
@@ -152,6 +174,7 @@ def make_kitchen():
     left = bp.build()
     left_roof = make_roof(x_offset=5).translate((5,-5,312.5))
     combine = cq.Workplane("XY").add(left).add(left_roof)
+    return left_roof
     return combine
 
 def make_center():
@@ -199,6 +222,14 @@ def make_living():
     bp.floors[0].make_custom_windows = casement_windows_2
     bp.floors[0].make()
 
+    st_front_wall = bp.floors[0].walls[1]
+    stone_wall = add_stones(st_front_wall, 175, bp.floors[1].height, bp.floors[1].wall_width, seed="test7")
+    bp.floors[0].walls[1] = stone_wall
+
+    st_side_wall = bp.floors[0].walls[3]
+    stone_side_wall = add_stones(st_side_wall, 175, bp.floors[0].height, bp.floors[0].wall_width, rotate = 90, seed="test9")
+    bp.floors[0].walls[3] = stone_side_wall
+
     bp.floors[1].make_custom_windows = lattice_windows
     bp.floors[1].make()
 
@@ -214,16 +245,17 @@ def make_living():
     right = bp.build()
     right_roof = make_roof().translate((-5,-5,312.5))
     combine = cq.Workplane("XY").add(right).add(right_roof)
+    return right_roof
     return combine
 
 
-left = make_kitchen().translate((87.5 + 62.5,0,0))
-center = make_center()
+#left = make_kitchen().translate((87.5 + 62.5,0,0))
+#center = make_center()
 right = make_living().translate((-87.5 - 62.5,0,0))
 
 scene = (cq.Workplane("XY")
-         .add(left)
-         .add(center)
+         #.add(left)
+         #.add(center)
          .add(right)
          )
 
@@ -232,4 +264,4 @@ if cq_editor_show:
     show_object(scene)
 
 if export_to_file:
-    cq.exporters.export(scene,'out/dollhouse.stl')
+    cq.exporters.export(scene,'out/right_roof.stl')

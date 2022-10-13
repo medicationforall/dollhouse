@@ -2,10 +2,10 @@ import cadquery as cq
 from cqterrain import Building, window, roof, stone
 from cadqueryhelper import series, grid
 
-cq_editor_show = True
-export_to_file = False
+cq_editor_show = False
+export_to_file = True
 render_floor = False
-render_roof_tiles = False
+render_roof_tiles = True
 
 def add_tudor_frame(wall, length, height, wall_width, frame_width=5, frame_height=3, rows=2, columns = 5,  w_length=0, w_height=0, rotate=0):
     #show_object(wall)
@@ -306,6 +306,7 @@ def make_center():
     over_roof = over_roof.translate((0,-5,312.5))
 
     combine = cq.Workplane("XY").add(center).add(over_roof)
+    return over_roof
     return combine
 
 def make_center_back():
@@ -387,14 +388,14 @@ def make_living():
 #left = make_kitchen().translate((87.5 + 62.5,0,0))
 #left_back = make_back_kitchen().translate((87.5 + 62.5,175,0))
 center = make_center()
-center_back = make_center_back().translate((0,175,0))
+#center_back = make_center_back().translate((0,175,0))
 #right = make_living().translate((-87.5 - 62.5,0,0))
 
 scene = (cq.Workplane("XY")
          #.add(left)
          #.add(left_back)
          .add(center)
-         .add(center_back)
+         #.add(center_back)
          #.add(right)
          )
 
@@ -403,4 +404,4 @@ if cq_editor_show:
     show_object(scene)
 
 if export_to_file:
-    cq.exporters.export(scene,'out/dollhouse.stl')
+    cq.exporters.export(scene,'out/dollhouse_03_center.stl')

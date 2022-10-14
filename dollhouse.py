@@ -1,11 +1,17 @@
 import cadquery as cq
-from cqterrain import Building, window, roof, stone
+from cqterrain import Building, window, roof, stone, stairs
 from cadqueryhelper import series, grid
 
-cq_editor_show = False
-export_to_file = True
+cq_editor_show = True
+export_to_file = False
 render_floor = False
-render_roof_tiles = True
+render_roof_tiles = False
+
+def test_operation(f):
+    log('test_operation')
+    box = cq.Workplane("XY").box(30,40,30).translate((-43,44.5,0))
+    f = f.cut(box)
+    return f
 
 def add_tudor_frame(wall, length, height, wall_width, frame_width=5, frame_height=3, rows=2, columns = 5,  w_length=0, w_height=0, rotate=0):
     #show_object(wall)
@@ -187,6 +193,9 @@ def make_kitchen():
     bp.room['window_walls'] = [False, True, True, False]
     bp.room['door_walls'] = [False, False, False, True]
     bp.room['make_custom_door'] = make_arch_door
+    bp.room['wall_width'] = 4
+    bp.room['floor_height'] = 4
+
     if render_floor:
         bp.room['floor_tile'] = pattern
         bp.room['floor_tile_padding'] = .5
@@ -241,6 +250,8 @@ def make_back_kitchen():
     bp.room['make_custom_door'] = make_arch_door
     bp.door['length'] = 60
     bp.door['height'] = 100
+    bp.room['wall_width'] = 4
+    bp.room['floor_height'] = 4
 
     #if render_floor:
     #    bp.room['floor_tile'] = pattern
@@ -287,6 +298,8 @@ def make_center():
     bp.room['window_walls'] = [False, False, False, False]
     bp.room['door_walls'] = [False, False, True, True]
     bp.room['make_custom_door'] = make_arch_door
+    bp.room['wall_width'] = 4
+    bp.room['floor_height'] = 4
 
     bp.door['length'] = 60
     bp.door['height'] = 100
@@ -306,7 +319,7 @@ def make_center():
     over_roof = over_roof.translate((0,-5,312.5))
 
     combine = cq.Workplane("XY").add(center).add(over_roof)
-    return over_roof
+    #return over_roof
     return combine
 
 def make_center_back():
@@ -315,24 +328,49 @@ def make_center_back():
     bp.room['window_walls'] = [False, False, False, False]
     bp.room['door_walls'] = [False, False, True, True]
     bp.room['make_custom_door'] = make_arch_door
+    bp.room['wall_width'] = 4
+    bp.room['floor_height'] = 4
 
     bp.door['length'] = 60
     bp.door['height'] = 100
 
     bp.make()
-    bp.floors[0].door_walls = [True, False, True, True]
+    bp.floors[0].door_walls = [True, False, True, False]
     bp.floors[0].make()
 
     front_wall = bp.floors[1].walls[0]
     paneled_wall = add_tudor_frame(front_wall, 125, bp.floors[1].height, bp.floors[1].wall_width, frame_width=5, frame_height=1.5, columns=4, rotate = 180)
     bp.floors[1].walls[0] = paneled_wall
 
+
+    bp.floors[1].floor.add_operation(test_operation)
+    #log()
+    bp.floors[1].floor.make()
     center = bp.build()
 
     center_roof = make_roof(125)
     center_roof = center_roof.rotate((0,0,1),(0,0,0),180).translate((0,5,312.5))
 
-    combine = cq.Workplane("XY").add(center).add(center_roof)
+    stair_lower = stairs(
+    length = 148,
+    width = 32,
+    height = 175,
+    run = 8,
+    stair_length_offset = 5.35,
+    stair_height = 3,
+    stair_height_offset = -.8,
+    rail_width = 3,
+    rail_height = 14,
+    step_overlap = None
+    )
+    stair_lower = stair_lower.rotate((0,0,1),(0,0,0),-90).translate((-15-28,165,0))
+    show_object(stair_lower)
+
+
+    #show_object(lower_landing)
+
+    combine = cq.Workplane("XY").add(center)
+    combine = combine.add(center_roof)
     return combine
 
 
@@ -343,6 +381,8 @@ def make_living():
     bp.room['window_walls'] = [False, True, False, True]
     bp.room['door_walls'] = [False, False, True, False]
     bp.room['make_custom_door'] = make_arch_door
+    bp.room['wall_width'] = 4
+    bp.room['floor_height'] = 4
 
     bp.door['length'] = 60
     bp.door['height'] = 100
@@ -384,19 +424,68 @@ def make_living():
     #return over_roof
     return combine
 
+def make_back_living():
+    bp = Building(length=175, width=175, height=350, stories=2)
+
+    bp.room['build_walls']= [True,False,True,True]
+    bp.room['window_walls'] = [True, False, False, True]
+    bp.room['door_walls'] = [False, False, True, False]
+    bp.room['make_custom_door'] = make_arch_door
+    bp.room['wall_width'] = 4
+    bp.room['floor_height'] = 4
+
+    bp.door['length'] = 60
+    bp.door['height'] = 100
+
+    bp.window['height'] = 55
+    bp.window['length'] = 78
+
+    bp.make()
+
+    bp.floors[0].make_custom_windows = casement_windows_2
+    bp.floors[0].make()
+
+    st_front_wall = bp.floors[0].walls[0]
+    stone_wall = add_stones(st_front_wall, 175, bp.floors[1].height, bp.floors[1].wall_width, seed="test7", rotate=180)
+    bp.floors[0].walls[0] = stone_wall
+
+    st_side_wall = bp.floors[0].walls[3]
+    stone_side_wall = add_stones(st_side_wall, 175, bp.floors[0].height, bp.floors[0].wall_width, rotate = 90, seed="test9")
+    bp.floors[0].walls[3] = stone_side_wall
+
+    bp.floors[1].make_custom_windows = lattice_windows
+    bp.floors[1].make()
+
+    front_wall = bp.floors[1].walls[0]
+    paneled_wall = add_tudor_frame(front_wall, 175, bp.floors[1].height, bp.floors[1].wall_width, frame_width=5, frame_height=1.5, columns=4, w_length=78, w_height=55, rotate=180)
+    bp.floors[1].walls[0] = paneled_wall
+
+    side_wall = bp.floors[1].walls[3]
+    paneled_wall2 = add_tudor_frame(side_wall, 175, bp.floors[1].height, bp.floors[1].wall_width, frame_width=5, frame_height=1.5, columns=4, w_length=78, w_height=55, rotate=90)
+    bp.floors[1].walls[3] = paneled_wall2#.rotate((0,0,1),(0,0,0),-90)
+
+    right = bp.build()
+    right_roof = make_roof().rotate((0,0,1),(0,0,0),180)
+    right_roof = right_roof.translate((-5, 5,312.5))
+
+    combine = cq.Workplane("XY").add(right).add(right_roof)
+    return combine
+
 
 #left = make_kitchen().translate((87.5 + 62.5,0,0))
 #left_back = make_back_kitchen().translate((87.5 + 62.5,175,0))
-center = make_center()
-#center_back = make_center_back().translate((0,175,0))
+#center = make_center()
+center_back = make_center_back().translate((0,175,0))
 #right = make_living().translate((-87.5 - 62.5,0,0))
+#right_back = make_back_living().translate((-87.5 - 62.5,175,0))
 
 scene = (cq.Workplane("XY")
          #.add(left)
          #.add(left_back)
-         .add(center)
-         #.add(center_back)
+         #.add(center)
+         .add(center_back)
          #.add(right)
+         #.add(right_back)
          )
 
 

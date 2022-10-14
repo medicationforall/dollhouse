@@ -1,5 +1,5 @@
 import cadquery as cq
-from cqterrain import Building, window, roof, stone, stairs
+from cqterrain import Building, window, roof, stone, stairs, Ladder
 from cadqueryhelper import series, grid
 
 cq_editor_show = True
@@ -9,7 +9,7 @@ render_roof_tiles = False
 
 def test_operation(f):
     log('test_operation')
-    box = cq.Workplane("XY").box(30,40,30).translate((-43,44.5,0))
+    box = cq.Workplane("XY").box(31,40,30).translate((-42.5,44.5,0))
     f = f.cut(box)
     return f
 
@@ -366,8 +366,15 @@ def make_center_back():
     stair_lower = stair_lower.rotate((0,0,1),(0,0,0),-90).translate((-15-28,165,0))
     show_object(stair_lower)
 
+    ladder_bp = Ladder(length=30, height=175, width=8)
+    ladder_bp.rung_padding = 12
+    ladder_bp.rung_height = 3
+    ladder_bp.rung_width = 3
+    ladder_bp.make()
+    ladder = ladder_bp.build().rotate((0,0,1),(0,0,0),90).translate((55,110,175))
 
-    #show_object(lower_landing)
+
+    show_object(ladder)
 
     combine = cq.Workplane("XY").add(center)
     combine = combine.add(center_roof)
@@ -443,6 +450,7 @@ def make_back_living():
     bp.make()
 
     bp.floors[0].make_custom_windows = casement_windows_2
+    bp.floors[0].door_walls = [False, False, False, False]
     bp.floors[0].make()
 
     st_front_wall = bp.floors[0].walls[0]

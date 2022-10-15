@@ -2,24 +2,23 @@ import cadquery as cq
 from cqterrain import Building, window, roof, stone, stairs, Ladder
 from cadqueryhelper import series, grid
 
-cq_editor_show = True
-export_to_file = False
+cq_editor_show = False
+export_to_file = True
 render_floor = False
-render_roof_tiles = False
+render_roof_tiles = True
 
 def test_operation(f):
-    log('test_operation')
     box = cq.Workplane("XY").box(31,40,30).translate((-42.5,44.5,0))
     f = f.cut(box)
     return f
 
-def add_tudor_frame(wall, length, height, wall_width, frame_width=5, frame_height=3, rows=2, columns = 5,  w_length=0, w_height=0, rotate=0):
+def add_tudor_frame(wall, length, height, wall_width, frame_width=5, frame_height=5, rows=2, columns = 5,  w_length=0, w_height=0, rotate=0):
     #show_object(wall)
     t_length = length/ columns - frame_width
     t_width = frame_height
     t_height =  (height / rows) - frame_width
 
-    frame = window.frame(length, frame_width, height).translate((0,-1*((frame_height/2)+(wall_width/2)),0))
+    frame = window.frame(length, frame_height, height).translate((0,-1*((frame_height/2)+(wall_width/2)),0))
     grill = window.grill(length, wall_width, height, columns, rows, frame_width, frame_height ).translate((0,-1*((frame_height/2)+(wall_width/2)),0))
     if w_length and w_height:
         win_cut = cq.Workplane("XY").box(w_length, frame_height, w_height).translate((0,-1*((frame_height/2)+(wall_width/2)),0))
@@ -338,18 +337,28 @@ def make_center_back():
     bp.floors[0].door_walls = [True, False, True, False]
     bp.floors[0].make()
 
+    bp.floors[1].window_walls = [True,False,False,False]
+    bp.floors[1].window_count=3
+    bp.floors[1].window['height'] = 55
+    bp.floors[1].window['length'] = 25
+    bp.floors[1].make_custom_windows = lattice_windows
+    bp.floors[1].make()
+
     front_wall = bp.floors[1].walls[0]
-    paneled_wall = add_tudor_frame(front_wall, 125, bp.floors[1].height, bp.floors[1].wall_width, frame_width=5, frame_height=1.5, columns=4, rotate = 180)
+    paneled_wall = add_tudor_frame(front_wall, 125, bp.floors[1].height, bp.floors[1].wall_width, frame_width=5, frame_height=1.5, columns=4, rotate = 180, w_length=78, w_height=55)
     bp.floors[1].walls[0] = paneled_wall
 
 
+
     bp.floors[1].floor.add_operation(test_operation)
-    #log()
     bp.floors[1].floor.make()
     center = bp.build()
 
-    center_roof = make_roof(125)
+    center_roof = make_roof(125, x_offset=-3)
     center_roof = center_roof.rotate((0,0,1),(0,0,0),180).translate((0,5,312.5))
+
+    roof_entrance = cq.Workplane("XY").box(40,30, 20).translate((35,-60,270))
+    center_roof = center_roof.cut(roof_entrance)
 
     stair_lower = stairs(
     length = 148,
@@ -363,21 +372,24 @@ def make_center_back():
     rail_height = 14,
     step_overlap = None
     )
-    stair_lower = stair_lower.rotate((0,0,1),(0,0,0),-90).translate((-15-28,165,0))
-    show_object(stair_lower)
+    stair_lower = stair_lower.rotate((0,0,1),(0,0,0),-90).translate((-15-28,-10,0))
 
     ladder_bp = Ladder(length=30, height=175, width=8)
     ladder_bp.rung_padding = 12
     ladder_bp.rung_height = 3
     ladder_bp.rung_width = 3
     ladder_bp.make()
-    ladder = ladder_bp.build().rotate((0,0,1),(0,0,0),90).translate((55,110,175))
-
-
-    show_object(ladder)
+    ladder = ladder_bp.build().rotate((0,0,1),(0,0,0),90).translate((55,-60,175))
 
     combine = cq.Workplane("XY").add(center)
+    combine = combine.add(ladder)
+    combine = combine.add(stair_lower)
     combine = combine.add(center_roof)
+
+    second_floor = bp.floors[1].build()
+    second_ladder = ladder.translate((0,0,-175))
+    second_scene = cq.Workplane("XY").add(second_floor).add(second_ladder)
+    #return second_scene
     return combine
 
 
@@ -480,20 +492,20 @@ def make_back_living():
     return combine
 
 
-#left = make_kitchen().translate((87.5 + 62.5,0,0))
-#left_back = make_back_kitchen().translate((87.5 + 62.5,175,0))
-#center = make_center()
+left = make_kitchen().translate((87.5 + 62.5,0,0))
+left_back = make_back_kitchen().translate((87.5 + 62.5,175,0))
+center = make_center()
 center_back = make_center_back().translate((0,175,0))
-#right = make_living().translate((-87.5 - 62.5,0,0))
-#right_back = make_back_living().translate((-87.5 - 62.5,175,0))
+right = make_living().translate((-87.5 - 62.5,0,0))
+right_back = make_back_living().translate((-87.5 - 62.5,175,0))
 
 scene = (cq.Workplane("XY")
-         #.add(left)
-         #.add(left_back)
-         #.add(center)
+         .add(left)
+         .add(left_back)
+         .add(center)
          .add(center_back)
-         #.add(right)
-         #.add(right_back)
+         .add(right)
+         .add(right_back)
          )
 
 
@@ -501,4 +513,4 @@ if cq_editor_show:
     show_object(scene)
 
 if export_to_file:
-    cq.exporters.export(scene,'out/dollhouse_03_center.stl')
+    cq.exporters.export(scene,'out/dollhouse_test_roof.stl')

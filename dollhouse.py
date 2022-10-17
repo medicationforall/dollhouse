@@ -1,11 +1,11 @@
 import cadquery as cq
-from cqterrain import Building, window, roof, stone, stairs, Ladder
+from cqterrain import Building, window, roof, stone, stairs, Ladder, tile
 from cadqueryhelper import series, grid
 
-cq_editor_show = False
-export_to_file = True
+cq_editor_show = True
+export_to_file = False
 render_floor = False
-render_roof_tiles = True
+render_roof_tiles = False
 
 def test_operation(f):
     box = cq.Workplane("XY").box(31,40,30).translate((-42.5,44.5,0))
@@ -184,6 +184,22 @@ def make_arch_door(wall, length, width, height, floor_height):
     w = wall.cut(cutout)
     return w
 
+def make_arch_door_fancy(wall, length, width, height, floor_height):
+    bottom = wall.faces("-Z").val()
+    cutout = (cq.Workplane(bottom.Center())
+              .box(length, width+2, height)
+              .translate((0,2,(height/2)+floor_height))
+              )
+    cutout = cutout.faces("Z").edges("Y").fillet((length/2)-.5)
+
+    door_frame = (cq.Workplane(bottom.Center())
+              .box(length+10, width+2, height+10)
+              .translate((0,2,((height+4)/2)+floor_height))
+              )
+    door_frame = door_frame.faces("Z").edges("Y").fillet(((length+8)/2)-.5)
+    w = wall.add(door_frame).cut(cutout)
+    return w
+
 
 def make_kitchen():
     bp = Building(length=175, width=175, height=350, stories=2)
@@ -246,11 +262,11 @@ def make_back_kitchen():
     bp.room['build_walls']= [True,False,True,True]
     bp.room['window_walls'] = [True, False, True, False]
     bp.room['door_walls'] = [False, False, False, True]
-    bp.room['make_custom_door'] = make_arch_door
+    bp.room['make_custom_door'] = make_arch_door_fancy
     bp.door['length'] = 60
     bp.door['height'] = 100
     bp.room['wall_width'] = 4
-    bp.room['floor_height'] = 4
+    bp.room['floor_height'] = 3
 
     #if render_floor:
     #    bp.room['floor_tile'] = pattern
@@ -264,6 +280,9 @@ def make_back_kitchen():
     bp.floors[0].window['height'] = 45
     bp.floors[0].window['length'] = 28
     bp.floors[0].make_custom_windows = casement_windows
+    if render_floor or True:
+        bp.floors[0].floor_tile = tile.octagon_with_dots(10, 2.4, 3.2, 1)
+        bp.floors[0].floor_tile_padding = 1
     bp.floors[0].make()
 
     st_front_wall = bp.floors[0].walls[0]
@@ -347,8 +366,6 @@ def make_center_back():
     front_wall = bp.floors[1].walls[0]
     paneled_wall = add_tudor_frame(front_wall, 125, bp.floors[1].height, bp.floors[1].wall_width, frame_width=5, frame_height=1.5, columns=4, rotate = 180, w_length=78, w_height=55)
     bp.floors[1].walls[0] = paneled_wall
-
-
 
     bp.floors[1].floor.add_operation(test_operation)
     bp.floors[1].floor.make()
@@ -449,7 +466,7 @@ def make_back_living():
     bp.room['build_walls']= [True,False,True,True]
     bp.room['window_walls'] = [True, False, False, True]
     bp.room['door_walls'] = [False, False, True, False]
-    bp.room['make_custom_door'] = make_arch_door
+    bp.room['make_custom_door'] = make_arch_door_fancy
     bp.room['wall_width'] = 4
     bp.room['floor_height'] = 4
 
@@ -492,19 +509,19 @@ def make_back_living():
     return combine
 
 
-left = make_kitchen().translate((87.5 + 62.5,0,0))
+#left = make_kitchen().translate((87.5 + 62.5,0,0))
 left_back = make_back_kitchen().translate((87.5 + 62.5,175,0))
-center = make_center()
+#center = make_center()
 center_back = make_center_back().translate((0,175,0))
-right = make_living().translate((-87.5 - 62.5,0,0))
+#right = make_living().translate((-87.5 - 62.5,0,0))
 right_back = make_back_living().translate((-87.5 - 62.5,175,0))
 
 scene = (cq.Workplane("XY")
-         .add(left)
+         #.add(left)
          .add(left_back)
-         .add(center)
+         #.add(center)
          .add(center_back)
-         .add(right)
+         #.add(right)
          .add(right_back)
          )
 

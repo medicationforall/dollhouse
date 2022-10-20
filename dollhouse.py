@@ -1,9 +1,10 @@
 import cadquery as cq
 from cqterrain import Building, window, roof, stone, stairs, Ladder, tile
 from cadqueryhelper import series, grid
+import math
 
-cq_editor_show = True
-export_to_file = False
+cq_editor_show = False
+export_to_file = True
 render_floor = False
 render_roof_tiles = False
 
@@ -294,6 +295,9 @@ def make_back_kitchen():
     bp.floors[0].walls[2] = stone_side_wall
 
     bp.floors[1].make_custom_windows = lattice_windows
+    if render_floor or True:
+        bp.floors[1].floor_tile = tile.basketweave(length = 10, width = 5, height = 1, padding = 1)
+        bp.floors[1].floor_tile_padding = 1
     bp.floors[1].make()
 
     front_wall = bp.floors[1].walls[0]
@@ -308,6 +312,11 @@ def make_back_kitchen():
     left_roof = make_roof().rotate((0,0,1),(0,0,0),180).translate((5,5,312.5))
 
     combine = cq.Workplane("XY").add(left).add(left_roof)
+
+    second_floor = bp.floors[0].build()
+    second_scene = cq.Workplane("XY").add(second_floor)
+    return second_scene
+
     return combine
 
 def make_center():
@@ -512,22 +521,36 @@ def make_back_living():
 #left = make_kitchen().translate((87.5 + 62.5,0,0))
 left_back = make_back_kitchen().translate((87.5 + 62.5,175,0))
 #center = make_center()
-center_back = make_center_back().translate((0,175,0))
+#center_back = make_center_back().translate((0,175,0))
 #right = make_living().translate((-87.5 - 62.5,0,0))
-right_back = make_back_living().translate((-87.5 - 62.5,175,0))
+#right_back = make_back_living().translate((-87.5 - 62.5,175,0))
 
 scene = (cq.Workplane("XY")
          #.add(left)
          .add(left_back)
          #.add(center)
-         .add(center_back)
+         #.add(center_back)
          #.add(right)
-         .add(right_back)
+         #.add(right_back)
          )
+
+#baskt = tile.basketweave(length = 8, width = 4, height = 1, padding = 1)
+#show_object(baskt)
+#bounds = baskt.val().BoundingBox()
+#t_width = bounds.ylen
+#t_length = bounds.xlen
+#t_height = bounds.zlen
+#log(t_width)
+#log(t_length)
+#log(t_height)
+#columns = math.floor(175/(t_width+ 1))
+#rows = math.floor(175/(t_length +1))
+#log(columns)
+#log(rows)
 
 
 if cq_editor_show:
     show_object(scene)
 
 if export_to_file:
-    cq.exporters.export(scene,'out/dollhouse_test_roof.stl')
+    cq.exporters.export(scene,'out/dollhouse_06_kitchenbf1.stl')

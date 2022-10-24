@@ -416,6 +416,12 @@ def make_center_back():
     second_ladder = ladder.translate((0,0,-175))
     second_scene = cq.Workplane("XY").add(second_floor).add(second_ladder)
     #return second_scene
+
+    first_floor = bp.floors[0].build()
+    first_stair = stair_lower.translate((0,0,0))
+    first_scene = cq.Workplane("XY").add(first_floor).add(first_stair)
+    return first_scene
+
     return combine
 
 
@@ -519,17 +525,17 @@ def make_back_living():
 
 
 #left = make_kitchen().translate((87.5 + 62.5,0,0))
-left_back = make_back_kitchen().translate((87.5 + 62.5,175,0))
+#left_back = make_back_kitchen().translate((87.5 + 62.5,175,0))
 #center = make_center()
-#center_back = make_center_back().translate((0,175,0))
+center_back = make_center_back().translate((0,175,0))
 #right = make_living().translate((-87.5 - 62.5,0,0))
 #right_back = make_back_living().translate((-87.5 - 62.5,175,0))
 
 scene = (cq.Workplane("XY")
          #.add(left)
-         .add(left_back)
+         #.add(left_back)
          #.add(center)
-         #.add(center_back)
+         .add(center_back)
          #.add(right)
          #.add(right_back)
          )
@@ -553,4 +559,4 @@ if cq_editor_show:
     show_object(scene)
 
 if export_to_file:
-    cq.exporters.export(scene,'out/dollhouse_06_kitchenbf1.stl')
+    cq.exporters.export(scene,'out/dollhouse_07_centerbf1.stl')

@@ -227,6 +227,9 @@ def make_kitchen():
     bp.floors[0].window['height'] = 45
     bp.floors[0].window['length'] = 28
     bp.floors[0].make_custom_windows = casement_windows
+    if render_floor or True:
+        bp.floors[0].floor_tile = tile.octagon_with_dots(10, 2.4, 3.2, 1)
+        bp.floors[0].floor_tile_padding = 1
     bp.floors[0].make()
 
     st_front_wall = bp.floors[0].walls[1]
@@ -252,6 +255,10 @@ def make_kitchen():
     left_roof = make_roof()#x_offset=5)#.translate((5,-5,312.5))
     over_roof = make_over_roof(left_roof, 125)
     over_roof2 = over_roof.translate((5,-5,312.5))
+
+    second_floor = bp.floors[0].build()
+    second_scene = cq.Workplane("XY").add(second_floor)
+    return second_scene
 
     combine = cq.Workplane("XY").add(left).add(over_roof2)
     #return over_roof
@@ -524,18 +531,18 @@ def make_back_living():
     return combine
 
 
-#left = make_kitchen().translate((87.5 + 62.5,0,0))
+left = make_kitchen().translate((87.5 + 62.5,0,0))
 #left_back = make_back_kitchen().translate((87.5 + 62.5,175,0))
 #center = make_center()
-center_back = make_center_back().translate((0,175,0))
+#center_back = make_center_back().translate((0,175,0))
 #right = make_living().translate((-87.5 - 62.5,0,0))
 #right_back = make_back_living().translate((-87.5 - 62.5,175,0))
 
 scene = (cq.Workplane("XY")
-         #.add(left)
+         .add(left)
          #.add(left_back)
          #.add(center)
-         .add(center_back)
+         #.add(center_back)
          #.add(right)
          #.add(right_back)
          )
@@ -559,4 +566,4 @@ if cq_editor_show:
     show_object(scene)
 
 if export_to_file:
-    cq.exporters.export(scene,'out/dollhouse_07_centerbf1.stl')
+    cq.exporters.export(scene,'out/dollhouse_08_kitchenf1.stl')

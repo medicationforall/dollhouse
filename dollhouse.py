@@ -210,7 +210,7 @@ def make_kitchen():
     bp.room['door_walls'] = [False, False, False, True]
     bp.room['make_custom_door'] = make_arch_door
     bp.room['wall_width'] = 4
-    bp.room['floor_height'] = 4
+    bp.room['floor_height'] = 3
 
     if render_floor:
         bp.room['floor_tile'] = pattern
@@ -241,6 +241,9 @@ def make_kitchen():
     bp.floors[0].walls[2] = stone_side_wall
 
     bp.floors[1].make_custom_windows = lattice_windows
+    if render_floor or True:
+        bp.floors[1].floor_tile = tile.basketweave(length = 10, width = 5, height = 1, padding = 1)
+        bp.floors[1].floor_tile_padding = 1
     bp.floors[1].make()
 
     front_wall = bp.floors[1].walls[1]
@@ -256,7 +259,7 @@ def make_kitchen():
     over_roof = make_over_roof(left_roof, 125)
     over_roof2 = over_roof.translate((5,-5,312.5))
 
-    second_floor = bp.floors[0].build()
+    second_floor = bp.floors[1].build()
     second_scene = cq.Workplane("XY").add(second_floor)
     return second_scene
 
@@ -566,4 +569,4 @@ if cq_editor_show:
     show_object(scene)
 
 if export_to_file:
-    cq.exporters.export(scene,'out/dollhouse_08_kitchenf1.stl')
+    cq.exporters.export(scene,'out/dollhouse_09_kitchenf2.stl')

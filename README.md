@@ -63,9 +63,13 @@ I used [Microsoft 3d Viewer](https://all3dp.com/2/microsoft-3d-viewer-guide/) to
 ![](doc_image/07.png)<br />
 Interior is still plain
 
----
+* Arches
+* Stones
+* Casement Windows
+* Lattice Windows
+* Roof
 
-## Details
+---
 
 ## Arches
 The arch cutouts are straight forward.<br />
@@ -321,7 +325,7 @@ def angle(length, height):
 
 ---
 
-## Adding Advanced Features
+## Additional Features
 ![](doc_image/45.png)<br />
 
 * Roof Dormers
@@ -397,8 +401,12 @@ Overall the dormer was complicated to make, and the code needs to be refactored 
 ![](doc_image/44.png)<br />
 
 ### Ladder
+![](doc_image/ladder_01.png)<br />
+
+![](doc_image/16.png)<br />
 
 ### Stairs
+![](doc_image/stairs_02.png)<br />
 
 
 ---

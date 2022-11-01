@@ -54,27 +54,34 @@ def add_stones(wall, length, height, wall_width, rotate=0, seed="test4"):
 
 
 def make_roof(roof_width=185, x_offset=0):
+    # Make the wedge shape
     gable_roof_raw = roof.dollhouse_gable(length=roof_width, width=185, height=100)
+
+    # Shell the roof to cut out the inside
     gable_roof = roof.shell(gable_roof_raw,face="Y", width=-4)
+
+    # Determine the arccosine angle of the roof
     angle = roof.angle(185, 100)
     face_x = gable_roof_raw.faces("<X")
 
+    # Feature to enable/disable rendering roof tiles
     if render_roof_tiles:
+        # Individual roof tile
         tile = cq.Workplane("XY").box(15,12,2).rotate((0,1,0),(0,0,0),8)
+        # Grid of tiles
         tiles = roof.tiles(tile, face_x, 185, 100, 15, 12, angle, rows=28, odd_col_push=[3,0], intersect=False).rotate((0,0,1),(0,0,0),90).translate((3,45,0))
         tiles = tiles.translate((x_offset,0,0))
+
+        # Cut away box to remove excess tiles
         inter_tiles = cq.Workplane("XY").box(roof_width,185, 100)
         inter_tiles = tiles.intersect(inter_tiles)
-
-        #show_object(inter_tiles)
-        #show_object(gable_roof)
-        #return gable_roof
         return gable_roof.add(inter_tiles)
     else:
+        # Quick roof no tiles
         return gable_roof
 
 
-def make_over_roof(roof_part, width=185):
+def make_dormer_roof(roof_part, width=185):
     gable_roof_raw = roof.dollhouse_gable(length=width, width=185, height=100).translate((0,0,-4.5))
 
     length=185
@@ -126,15 +133,19 @@ def make_over_roof(roof_part, width=185):
 
 
 def lattice_windows(wall, length, width, height, count, padding):
-    #log(f'custom window lattice {length}, {height}')
+    # Create the cut out the holes where the windows will be placed.
     window_cutout = cq.Workplane().box(length, width, height)
     window_cut_series = series(window_cutout, count, length_offset = padding)
 
+    # create the window frame, and lattice.
     i_window = window.frame(length, width+3, height)
     lattice = window.lattice(length=length, width=4, height=height, tile_size=6, lattice_height=2)
     i_window.add(lattice)
+
+    # Create the window set
     window_series = series(i_window, count, length_offset = padding)
 
+    # remove the cutout and add the windows
     w = wall.cut(window_cut_series)
     w = w.add(window_series)
 
@@ -268,7 +279,7 @@ def make_kitchen():
 
     left = bp.build()
     left_roof = make_roof()#x_offset=5)#.translate((5,-5,312.5))
-    over_roof = make_over_roof(left_roof, 125)
+    over_roof = make_dormer_roof(left_roof, 125)
     over_roof2 = over_roof.translate((5,-5,312.5))
 
     #second_floor = bp.floors[1].build()
@@ -364,7 +375,7 @@ def make_center():
     center = bp.build()
 
     center_roof = make_roof(125)
-    over_roof = make_over_roof(center_roof, 125)
+    over_roof = make_dormer_roof(center_roof, 125)
     over_roof = over_roof.translate((0,-5,312.5))
 
     combine = cq.Workplane("XY").add(center).add(over_roof)
@@ -490,7 +501,7 @@ def make_living():
 
     right = bp.build()
     right_roof = make_roof()#.translate((-5,-5,312.5))
-    over_roof = make_over_roof(right_roof, 125)
+    over_roof = make_dormer_roof(right_roof, 125)
     over_roof2 = over_roof.translate((-5,-5,312.5))
 
     combine = cq.Workplane("XY").add(right).add(over_roof2)

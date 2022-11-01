@@ -19,7 +19,7 @@ I opted for the main rooms to be 175mm x 175mm x 175mm or roughly 7" x 7" x 7".<
 Which is just about the limits of my print bed.
 
 ---
-## Code
+## Code Overview
 
 ### Dependencies
 * [CadQuery](https://cadquery.readthedocs.io/en/latest/) - Python Cad Libary
@@ -38,10 +38,12 @@ I opted for python code to make the cad model because I like making 3d models wi
 
 ### Cons
 * Tedious, the project itself was 500+ lines of code just for the dollhouse itself.
-* The re-usable api was expanded out as the model was being created.
-* If there are bugs in your logic tracking them down can be arduous, the generated models does not necessarily lend themselves well to unit tests.
+* The re-usable api was expanded out as the model was being created, which slowed down development.
+* If there are bugs in your logic tracking them down can be arduous, the generated models do not lend themselves well to unit tests.
 
-### In the beginning
+---
+
+### In The Beginning
 The initial outline of the project.
 ![](doc_image/04.png)<br />
 The front is too boring
@@ -49,9 +51,11 @@ The front is too boring
 ![](doc_image/03.png)<br />
 Shows the breakdown of the nine sections.
 
-### Adding exterior details
+---
+
+### Adding Exterior Details
 ![](doc_image/06.png)<br />
-I ended simplifying from the initial sketch.
+I ended up simplifying from the initial sketch.
 
 ![](doc_image/05.png)<br />
 I used [Microsoft 3d Viewer](https://all3dp.com/2/microsoft-3d-viewer-guide/) to generate the lighting on the model
@@ -84,7 +88,7 @@ def make_arch_door(wall, length, width, height, floor_height):
     return w
 ```
 The arch is aligned to the bottom of the object it's being cut out of.
-![](doc_image/34.png)
+![](doc_image/34.png)<br />
 
 
 ### Stones
@@ -117,7 +121,7 @@ def add_stones(wall, length, height, wall_width, rotate=0, seed="test4"):
 * The generated output of the stone pattern is defined by the seed.
   * different seed means different stone placement.
 
-Let's looks at cqterrain [stone.make_stones](https://github.com/medicationforall/cqterrain/blob/main/src/cqterrain/stone.py) code
+Let's looks at cqterrain [stone.make_stones](https://github.com/medicationforall/cqterrain/blob/main/src/cqterrain/stone.py) code.
 
 ``` python
 import cadquery as cq
@@ -176,6 +180,7 @@ def make_stones(parts, dim=[5,5,2], rows=2, columns=5, seed="test4"):
 ## Casement Windows
 ![](doc_image/window_casement_01.png)<br />
 
+Code for making the windows.
 ``` python
 def casement_windows(wall, length, width, height, count, padding):
     # Create the cut out the holes where the windows will be placed.
@@ -197,7 +202,7 @@ def casement_windows(wall, length, width, height, count, padding):
     return w
 ```
 
-Making the grill
+Making the grill.
 
 ``` python
 def grill(length=20, width=4, height=40, columns=4, rows=2, grill_width=1, grill_height=1):
@@ -218,11 +223,182 @@ def grill(length=20, width=4, height=40, columns=4, rows=2, grill_width=1, grill
 ```
 
 ![](doc_image/window_casement_02.png)<br />
+The tudor framing on the outside of the house are just these casement window grills.
 
 ![](doc_image/38.png)<br />
 
-### Roof Details
-The roof tiles was a struggle but it was a good opportunity re-learn some trigonometry.
+
+### Lattice Windows
+![](doc_image/window_lattice_01.png)<br />
+
+The only difference between the casement and the lattice is the grill pattern.
+
+``` python
+def lattice(length=20, width=4, height=40,  tile_size=4, lattice_width=1, lattice_height=1, lattice_angle=45):
+    # Determine longest distance between points
+    hyp = math.hypot(length, height)
+    columns= math.floor(hyp / (tile_size+lattice_width))
+    rows= math.floor(hyp / (tile_size+lattice_width))
+
+    # Make a flat plane
+    pane = cq.Workplane("XY").box(length, lattice_height, height)
+
+    #make the cutout tile
+    tile = cq.Workplane("XY").box(tile_size, lattice_height, tile_size).rotate((1,0,0),(0,0,0),90)
+    tiles = grid.make_grid(tile, [tile_size+lattice_width, tile_size+lattice_width], rows=columns, columns=rows).rotate((1,0,0),(0,0,0),-90).rotate((0,1,0),(0,0,0),lattice_angle)
+    combine = pane.cut(tiles)
+    return combine
+```
+![](doc_image/40.png)<br />
+
+
+
+### Roof
+![](doc_image/roof_08.png)<br />
+The roof tiles were a struggle but it was a good opportunity re-learn some trigonometry.
+
+Code to make a roof.
+``` python
+def make_roof(roof_width=185, x_offset=0):
+    # Make the wedge shape
+    gable_roof_raw = roof.dollhouse_gable(length=roof_width, width=185, height=100)
+
+    # Shell the roof to cut out the inside
+    gable_roof = roof.shell(gable_roof_raw,face="Y", width=-4)
+
+    # Determine the arccosine angle of the roof
+    angle = roof.angle(185, 100)
+    face_x = gable_roof_raw.faces("<X")
+
+    # Feature to enable/disable rendering roof tiles
+    if render_roof_tiles:
+        # Individual roof tile
+        tile = cq.Workplane("XY").box(15,12,2).rotate((0,1,0),(0,0,0),8)
+        # Grid of tiles
+        tiles = roof.tiles(tile, face_x, 185, 100, 15, 12, angle, rows=28, odd_col_push=[3,0], intersect=False).rotate((0,0,1),(0,0,0),90).translate((3,45,0))
+        tiles = tiles.translate((x_offset,0,0))
+
+        # Cut away box to remove excess tiles
+        inter_tiles = cq.Workplane("XY").box(roof_width,185, 100)
+        inter_tiles = tiles.intersect(inter_tiles)
+        return gable_roof.add(inter_tiles)
+    else:
+        # Quick roof no tiles
+        return gable_roof
+```
+Making the tiles is resource intensive, so a feature flag was added for quick rendering.
+
+Making the wedge
+``` python
+def dollhouse_gable(length= 40, width=40, height=40):
+    roof = cq.Workplane("XY" ).wedge(length,height,width,0,0,length,0).rotate((1,0,0), (0,0,0), -90)
+    return roof
+```
+
+Shell the roof
+``` python
+def shell(part, face="-Z", width=-1):
+    result = part.faces(face).shell(width)
+    return result
+```
+
+![](doc_image/43.png)<br />
+
+Determine angle
+``` python
+def angle(length, height):
+    '''
+    Presumed length and height are part of a right triangle
+    '''
+    hyp = math.hypot(length, height)
+    angle = length/hyp
+    angle_radians = math.acos((angle))
+    angle_deg = math.degrees(angle_radians)
+    return angle_deg
+```
+
+![](doc_image/41.png)<br />
+
+---
+
+## Adding Advanced Features
+![](doc_image/45.png)<br />
+
+* Roof Dormers
+* Ladder
+* Stairs
+
+
+### Roof Dormer
+![](doc_image/42.png)<br />
+
+Implementation of the dormer
+
+``` python
+def make_dormer_roof(roof_part, width=185):
+    # Wedge Used for cutout
+    gable_roof_raw = roof.dollhouse_gable(length=width, width=185, height=100).translate((0,0,-4.5))
+
+    length=185
+    height = 100
+    inner_height = 60
+
+    # Sub roof of the dormer
+    roof_half_one = roof.dollhouse_gable(length=140, width=40, height=30).translate((0,0,29)).rotate((0,0,1),(0,0,0),90).translate((-20,15,0))
+    roof_half_two = roof.dollhouse_gable(length=140, width=40, height=30).translate((0,0,29)).rotate((0,0,1),(0,0,0),-90).translate((20,15,0))
+
+    # Render the tiles of the dormer
+    if render_roof_tiles:
+        angle = roof.angle(40, 30)
+        face_x = roof_half_one.faces(">X")
+        tile = cq.Workplane("XY").box(15,12,2).rotate((0,1,0),(0,0,0),8)
+        tiles = roof.tiles(tile, face_x, 140, 30, 15, 12, angle, rows=4, odd_col_push=[3,0], intersect=False).translate((-14.5,23,29))
+        tiles2 = roof.tiles(tile, face_x, 140, 30, 15, 12, angle, rows=4, odd_col_push=[3,0], intersect=False).translate((-14.5,23,29)).rotate((0,0,1),(0,0,0),180).translate((0,46,0))
+
+    # make the body / walls of the cut-away dormer aligned to the parent roof. combine the body of the dormer with the dormer roof
+    # this one is solid
+    inner = roof_part.faces("<Z").box(80,110,inner_height, combine=False).translate((0,0,inner_height/2+4))
+    inner = inner.union(roof_half_one).union(roof_half_two)
+
+    # make the body / walls of the actual dormer aligned to the parent roof. combine the body of the dormer with the dormer roof
+    # this one is shelled
+    inner_shell = roof_part.faces("<Z").box(80,140,inner_height, combine=False).translate((0,15,inner_height/2+4))
+    inner_shell = inner_shell.union(roof_half_one).union(roof_half_two)
+    inner_shell = inner_shell.faces(">Y").shell(-4)
+
+    # cut away excess tiles
+    if render_roof_tiles:
+        tile_cut = cq.Workplane("XY").box(40,140,50).translate((20,15,25))
+        tile_cut2 = cq.Workplane("XY").box(40,140,50).translate((-20,15,25))
+
+        tiles = tiles.intersect(tile_cut)
+        tiles2 = tiles2.intersect(tile_cut2)
+
+        inner_shell = inner_shell.add(tiles).add(tiles2)
+
+    # shell the dormer roof
+    inner_shell = inner_shell.cut(gable_roof_raw)
+
+    # Place the dormer onto the roof part
+    combine = roof_part.cut(inner).add(inner_shell)
+
+    # Add the window to the dormer
+    window_slug = inner.faces("<Y").cylinder(8,20,combine=False).rotateAboutCenter((1,0,0),90).translate((0,2.5,10))
+    window_inner = inner.faces("<Y").cylinder(8,17,combine=False).rotateAboutCenter((1,0,0),90).translate((0,2.5,10))
+    win_frame = window_slug.cut(window_inner)
+    grill = window.grill(40, 5, 40, 2, 2, 3, 3 ).translate((0,-52,5))
+    combine = combine.cut(window_slug).add(win_frame).add(grill)
+
+    return combine
+```
+
+Overall the dormer was complicated to make, and the code needs to be refactored and broken up.
+
+![](doc_image/44.png)<br />
+
+### Ladder
+
+### Stairs
 
 
 ---

@@ -331,6 +331,7 @@ def angle(length, height):
 * Roof Dormers
 * Ladder
 * Stairs
+* Floor Tiles
 
 
 ### Roof Dormer
@@ -535,3 +536,21 @@ def basketweave(length = 4, width = 2, height = 1, padding = .5):
 
 ---
 ## Printing
+
+* On average each part takes about 2 days to print.
+* I spent 3 weeks printings parts.
+* No Support materials were needed for any of the parts.
+* The part modularity was a plus, and allows the kids to re-organize the house into different shapes or multiple smaller houses.
+* If I were to do this again I would add a more robust mechanism for connecting parts together.
+
+![](doc_image/35.png)<br />
+
+![](doc_image/28.png)<br />
+
+![](doc_image/26.png)<br />
+
+![](doc_image/29.png)<br />
+
+![](doc_image/32.png)<br />
+
+![](doc_image/49.png)<br />

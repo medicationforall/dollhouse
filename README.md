@@ -16,7 +16,7 @@ It's a tudor style house with inspiration drawn from google image searches.<br /
 The central idea is that it would be printed in roughly nine sections. With the floors and roof divided into three sections each.
 
 I opted for the main rooms to be 175mm x 175mm x 175mm or roughly 7" x 7" x 7".<br />
-Which is just about the limits of my print bed.
+Which is about the limits of my print bed.
 
 ---
 ## Code Overview
@@ -403,11 +403,135 @@ Overall the dormer was complicated to make, and the code needs to be refactored 
 ### Ladder
 ![](doc_image/ladder_01.png)<br />
 
+``` python
+# Create a latter instance
+ladder_bp = Ladder(length=30, height=175, width=8)
+# Set sub-part parameters
+ladder_bp.rung_padding = 12
+ladder_bp.rung_height = 3
+ladder_bp.rung_width = 3
+
+# make the sub parts
+ladder_bp.make()
+
+# Combine the parts into one solid.
+ladder = ladder_bp.build().rotate((0,0,1),(0,0,0),90).translate((55,-60,175))
+```
+cqterrain class - [Ladder code](https://github.com/medicationforall/cqterrain/blob/main/src/cqterrain/Ladder.py).<br />
+Ladders are a totally different pattern. <br />they are class objects with two lifecycles:
+* *make* creates the sub-parts.
+* *build* assembles the parts into a solid.
+
 ![](doc_image/16.png)<br />
 
 ### Stairs
 ![](doc_image/stairs_02.png)<br />
 
+``` python
+stair_lower = stairs(
+length = 148,
+width = 32,
+height = 175,
+run = 8,
+stair_length_offset = 5.35,
+stair_height = 3,
+stair_height_offset = -.8,
+rail_width = 3,
+rail_height = 14,
+step_overlap = None
+)
+```
+* [Documentation](https://github.com/medicationforall/cqterrain/blob/main/documentation/stairs.md)
+* [Code](https://github.com/medicationforall/cqterrain/blob/main/src/cqterrain/stairs.py)
+
+Stairs are an older pattern in cqterrain, you call the constructor with parameters and it returns the solid.<br />
+The code is planned to be replaced.
+
+![](doc_image/46.png)<br />
+
+### Floor Tiles
+
+The project used two variants of Floor tiles.
+
+#### Octagon With Dots
+
+![](doc_image/tile_octagon_with_dots_01.png)<br />
+
+
+Tile code
+``` python
+def octagon_with_dots(tile_size=5, chamfer_size = 1.2, mid_tile_size =1.6, spacing = .5 ):
+    tile = (cq.Workplane("XY")
+            .rect(tile_size,tile_size)
+            .extrude(1)
+            .edges("|Z")
+            .chamfer(chamfer_size) # SET PERCENTAGE
+            )
+
+    rotated_tile = tile.rotate((0,0,1),(0,0,0), 45)
+
+    mid_tile = (cq.Workplane("XY")
+            .rect(mid_tile_size, mid_tile_size)
+            .extrude(1)
+            .rotate((0,0,1),(0,0,0), 45)
+            )
+
+    tiles = grid.make_grid(tile, [tile_size + spacing,tile_size + spacing], rows=3, columns=3)
+    center_tiles = grid.make_grid(mid_tile, [tile_size + spacing, tile_size + spacing], rows=4, columns=4)
+
+    combined = tiles.add(center_tiles).translate((0,0,-1*(1/2)))
+    return combined
+```
+
+Two sets of tiles overlaid ontop of each other.<br />
+When a tile is applied to a room; the code is built to know what to do with that.
+
+``` python
+  bp.floors[0].floor_tile = tile.octagon_with_dots(10, 2.4, 3.2, 1)
+  bp.floors[0].floor_tile_padding = 1
+  bp.floors[0].make()
+```
+
+![](doc_image/47.png)<br />
+
+#### Basketweave
+
+![](doc_image/tile_basketweave_01.png)<br />
+
+``` python
+def basketweave(length = 4, width = 2, height = 1, padding = .5):
+    length_padding = length + padding
+    width_padding = width + padding
+    rect = (
+            cq.Workplane("XY")
+            .box(width, length_padding, height)
+            .center(width_padding, 0)
+            .box(width, length_padding, height)
+            .translate((-1*(width_padding/2), 0, 0))
+            )
+
+    rect2 = (
+            cq.Workplane("XY")
+            .box(width, length_padding, height)
+            .center(width_padding, 0)
+            .box(width, length_padding, height)
+            .translate((-1*(width_padding/2), 0, 0))
+            .rotate((0,0,1), (0,0,0), 90)
+            .translate((width_padding*2, 0, 0))
+        )
+
+    combine = (cq.Workplane("XY").union(rect).union(rect2).translate((-1*(width_padding),0,0)))
+    combine2 = (cq.Workplane("XY")
+                .union(combine)
+                .rotate((0,0,1),(0,0,0), 180)
+                .translate((0,width_padding*2,0))
+                )
+
+    tile_combine = cq.Workplane("XY").union(combine).union(combine2).translate((0,-1*(width_padding),0))
+    return tile_combine
+```
+
+![](doc_image/48.png)<br />
 
 ---
 ## Printing

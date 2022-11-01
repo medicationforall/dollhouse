@@ -332,6 +332,7 @@ def angle(length, height):
 * Ladder
 * Stairs
 * Floor Tiles
+* Clips
 
 
 ### Roof Dormer
@@ -534,6 +535,32 @@ def basketweave(length = 4, width = 2, height = 1, padding = .5):
 
 ![](doc_image/48.png)<br />
 
+
+### Clips
+
+I ended up making a couple clip variants to hold the parts together.
+![](doc_image/clip_01.png)<br />
+
+![](doc_image/clip_02.png)<br />
+
+Clip code
+
+``` python
+import cadquery as cq
+
+def clip():
+    part1 = cq.Workplane("XY").box(12.5, 24, 8)
+    inner = cq.Workplane("XY").box(8.5,22,8).translate((0,-1,0))
+    combined = part1.cut(inner)
+    combined = combined.fillet(.3)
+    return combined
+
+part_clip = clip()
+show_object(part_clip)
+```
+
+The clips work so-so.
+
 ---
 ## Printing
 
@@ -554,3 +581,5 @@ def basketweave(length = 4, width = 2, height = 1, padding = .5):
 ![](doc_image/32.png)<br />
 
 ![](doc_image/49.png)<br />
+
+![](doc_image/08.png)<br />

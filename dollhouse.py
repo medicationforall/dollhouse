@@ -6,7 +6,7 @@ import math
 cq_editor_show = False
 export_to_file = True
 render_floor = False
-render_roof_tiles = False
+render_roof_tiles = True
 
 def test_operation(f):
     box = cq.Workplane("XY").box(31,40,30).translate((-42.5,44.5,0))
@@ -141,14 +141,19 @@ def lattice_windows(wall, length, width, height, count, padding):
     return w
 
 def casement_windows(wall, length, width, height, count, padding):
+    # Create the cut out the holes where the windows will be placed.
     window_cutout = cq.Workplane().box(length, width, height)
     window_cut_series = series(window_cutout, count, length_offset = padding)
 
+    # create the window frame, and grill.
     i_window = window.frame(length, width+3, height)
     grill = window.grill(length=length, width=4, height=height, rows=4, columns=2, grill_width=2, grill_height=3)
     i_window.add(grill)
+
+    # Create the window set
     window_series = series(i_window, count, length_offset = padding)
 
+    # remove the cutout and add the windows
     w = wall.cut(window_cut_series)
     w = w.add(window_series)
 
@@ -176,12 +181,19 @@ if render_floor:
 
 
 def make_arch_door(wall, length, width, height, floor_height):
+    # find the bottom of the wall to align to.
     bottom = wall.faces("-Z").val()
+
+    #create the initial shape
     cutout = (cq.Workplane(bottom.Center())
               .box(length, width, height)
               .translate((0,0,(height/2)+floor_height))
               )
+
+    # round off the top
     cutout = cutout.faces("Z").edges("Y").fillet((length/2)-.5)
+    #remove the arch from the wall
+
     w = wall.cut(cutout)
     return w
 
@@ -259,12 +271,12 @@ def make_kitchen():
     over_roof = make_over_roof(left_roof, 125)
     over_roof2 = over_roof.translate((5,-5,312.5))
 
-    second_floor = bp.floors[1].build()
-    second_scene = cq.Workplane("XY").add(second_floor)
-    return second_scene
+    #second_floor = bp.floors[1].build()
+    #second_scene = cq.Workplane("XY").add(second_floor)
+    #return second_scene
 
     combine = cq.Workplane("XY").add(left).add(over_roof2)
-    #return over_roof
+    return over_roof
     return combine
 
 def make_back_kitchen():
@@ -569,4 +581,4 @@ if cq_editor_show:
     show_object(scene)
 
 if export_to_file:
-    cq.exporters.export(scene,'out/dollhouse_09_kitchenf2.stl')
+    cq.exporters.export(scene,'out/dollhouse_10_kitchenRoof.stl')

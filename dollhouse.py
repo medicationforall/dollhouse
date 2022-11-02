@@ -3,9 +3,9 @@ from cqterrain import Building, window, roof, stone, stairs, Ladder, tile
 from cadqueryhelper import series, grid
 import math
 
-cq_editor_show = False
-export_to_file = True
-render_floor = False
+cq_editor_show = True
+export_to_file = False
+render_floor = True
 render_roof_tiles = True
 
 def test_operation(f):
@@ -184,12 +184,6 @@ def casement_windows_2(wall, length, width, height, count, padding):
 
     return w
 
-if render_floor:
-    pattern = cq.importers.importStep('stl/floral.step')
-    scaled = pattern.val().scale(0.15)
-    center = scaled.CenterOfBoundBox()
-    pattern = cq.Workplane().add(scaled).translate((center.x*-1,center.y*-1,center.z*-1))
-
 
 def make_arch_door(wall, length, width, height, floor_height):
     # find the bottom of the wall to align to.
@@ -235,10 +229,6 @@ def make_kitchen():
     bp.room['wall_width'] = 4
     bp.room['floor_height'] = 3
 
-    if render_floor:
-        bp.room['floor_tile'] = pattern
-        bp.room['floor_tile_padding'] = .5
-
     bp.door['length'] = 60
     bp.door['height'] = 100
 
@@ -250,7 +240,7 @@ def make_kitchen():
     bp.floors[0].window['height'] = 45
     bp.floors[0].window['length'] = 28
     bp.floors[0].make_custom_windows = casement_windows
-    if render_floor or True:
+    if render_floor:
         bp.floors[0].floor_tile = tile.octagon_with_dots(10, 2.4, 3.2, 1)
         bp.floors[0].floor_tile_padding = 1
     bp.floors[0].make()
@@ -264,7 +254,7 @@ def make_kitchen():
     bp.floors[0].walls[2] = stone_side_wall
 
     bp.floors[1].make_custom_windows = lattice_windows
-    if render_floor or True:
+    if render_floor:
         bp.floors[1].floor_tile = tile.basketweave(length = 10, width = 5, height = 1, padding = 1)
         bp.floors[1].floor_tile_padding = 1
     bp.floors[1].make()
@@ -302,9 +292,6 @@ def make_back_kitchen():
     bp.room['wall_width'] = 4
     bp.room['floor_height'] = 3
 
-    #if render_floor:
-    #    bp.room['floor_tile'] = pattern
-    #    bp.room['floor_tile_padding'] = .5
 
     bp.window['height'] = 55
     bp.window['length'] = 78
@@ -314,7 +301,7 @@ def make_back_kitchen():
     bp.floors[0].window['height'] = 45
     bp.floors[0].window['length'] = 28
     bp.floors[0].make_custom_windows = casement_windows
-    if render_floor or True:
+    if render_floor:
         bp.floors[0].floor_tile = tile.octagon_with_dots(10, 2.4, 3.2, 1)
         bp.floors[0].floor_tile_padding = 1
     bp.floors[0].make()
@@ -328,7 +315,7 @@ def make_back_kitchen():
     bp.floors[0].walls[2] = stone_side_wall
 
     bp.floors[1].make_custom_windows = lattice_windows
-    if render_floor or True:
+    if render_floor:
         bp.floors[1].floor_tile = tile.basketweave(length = 10, width = 5, height = 1, padding = 1)
         bp.floors[1].floor_tile_padding = 1
     bp.floors[1].make()

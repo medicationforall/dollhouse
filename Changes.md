@@ -1,6 +1,7 @@
 # dollhouse changelog
 
 ## Main wip
+* Updated License
 
-## 0.0.1
+## 1.0.0
 * Initial release
